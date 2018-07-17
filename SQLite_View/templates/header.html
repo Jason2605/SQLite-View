@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}SQLite View{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-rc.2/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body>
+    <div class="navbar-fixed">
+        <nav>
+            <div class="nav-wrapper">
+              <!--<a href="#" class="brand-logo">Logo</a>-->
+            </div>
+        </nav>
+    </div>
+
+    <ul id="slide-out" class="sidenav sidenav-fixed" style="margin-top:64px;">
+        <li>
+            <div class="user-view">
+                <div class="background">
+                    <img src="{{ url_for('static', filename='img/user-img-background.jpg') }}">
+                </div>
+                <a><img class="circle" src="{{ url_for('static', filename='img/user.png') }}"></a>
+                <a><span class="white-text name">Logged in as: {{ current_user.username }}</span></a>
+                <a><span class="white-text email"></span></a>
+            </div>
+        </li>
+        {% for header in header_array %}
+        <li {% if header[1] in request.path %} class="active" {% endif %}>
+            <a class="waves-effect" href="{{ header[1] }}"><i class="material-icons">{{ header[2] }}</i>{{ header[0] }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <div class="main-body">
+        {% block body %}{% endblock %}
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-rc.2/js/materialize.min.js"></script>
+    {% block extraJS %}{% endblock %}
+</body>
+</html>

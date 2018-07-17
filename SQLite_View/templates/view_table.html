@@ -1,0 +1,109 @@
+{% extends "header.html" %}
+
+{% block title %}
+    SQLite View - {{ table }}
+{% endblock %}
+
+{% block body %}
+
+<div class="card">
+    <div class="card-tabs">
+        <ul class="tabs tabs-fixed-width">
+            <li class="tab"><a class="active" href="#info">Table information</a></li>
+            <li class="tab"><a href="#data">Data</a></li>
+        </ul>
+    </div>
+    <div class="card-content">
+
+        <div id="data">
+            <ul class="collapsible">
+                <li class="active">
+                    <div class="collapsible-header"><i class="material-icons">description</i>Table Format</div>
+                    <div class="collapsible-body overflow">
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    {% for column in table_columns %}
+                                        <th>{{ column }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data %}
+                                    <tr>
+                                        {% for column in row %}
+                                        <td>{{ column }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </li>
+                <li>
+                    <div class="collapsible-header"><i class="material-icons">developer_board</i>JSON Format</div>
+                    <div class="collapsible-body">
+                        <pre>{{ json_data }}</pre>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div id="info">
+            <ul class="collapsible">
+                <li>
+                    <div class="collapsible-header"><i class="material-icons">settings</i>SQL Schema</div>
+                    <div class="collapsible-body"><span><pre>{{ table_schema }}</pre></span></div>
+                </li>
+                <li class="active">
+                    <div class="collapsible-header"><i class="material-icons">info_outline</i>Columns</div>
+                    <div class="collapsible-body">
+                        <span>
+                            <span class="card-title">Selected Table: {{ table }}</span>
+                            <table class="responsive-table striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Datatype</th>
+                                        <th>Allow NULL</th>
+                                        <th>Default Value</th>
+                                        <th>Primary Key</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table_data %}
+                                        <tr>
+                                            {% for column in row %}
+                                                {% if loop.index == 3 %}
+                                                    <td><i class="material-icons">{% if column == 0 %}check{% else %}clear{% endif %}</i></td>
+                                                {% elif loop.index == 5 %}
+                                                    <td><i class="material-icons">{% if column == 1 %}check{% else %}clear{% endif %}</i></td>
+                                                {% else %}
+                                                    <td>{{ column }}</td>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extraJS %}
+    <script>
+          document.addEventListener('DOMContentLoaded', function() {
+              let elems = document.querySelectorAll('.collapsible');
+              M.Collapsible.init(elems, {});
+
+              let elem = document.querySelector('.tabs');
+              M.Tabs.init(elem, {});
+          });
+    </script>
+{% endblock %}

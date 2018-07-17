@@ -1,0 +1,12 @@
+
+\.DS_Store
+
+\.idea/
+
+databases/
+
+*.db
+
+*.pyc
+
+test\.py
