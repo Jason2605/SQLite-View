@@ -137,6 +137,7 @@ def tables(database, table):
                            table_columns=columns,
                            data=data,
                            table_schema=table_sql[0],
+                           sql_indexes="\n".join(indexes),
                            indexes=found_indexes,
                            table_data=table_data,
                            json_data=json_data)

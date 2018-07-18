@@ -51,7 +51,7 @@
             <ul class="collapsible">
                 <li>
                     <div class="collapsible-header"><i class="material-icons">settings</i>SQL Schema</div>
-                    <div class="collapsible-body"><span><pre>{{ table_schema }}</pre></span></div>
+                    <div class="collapsible-body"><span><pre>{{ table_schema }}</pre>{% if sql_indexes %}<pre>{{ sql_indexes }}{% endif %}</pre></span></div>
                 </li>
                 <li class="active">
                     <div class="collapsible-header"><i class="material-icons">info_outline</i>Columns</div>
