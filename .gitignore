@@ -3,7 +3,7 @@
 
 \.idea/
 
-databases/
+databases/*.db
 
 *.db
 
@@ -11,4 +11,4 @@ databases/
 
 test\.py
 
-dumps/
+dumps/*.sql
