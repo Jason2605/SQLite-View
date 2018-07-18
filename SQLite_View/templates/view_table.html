@@ -14,7 +14,6 @@
         </ul>
     </div>
     <div class="card-content">
-
         <div id="data">
             <ul class="collapsible">
                 <li class="active">
@@ -48,7 +47,6 @@
                 </li>
             </ul>
         </div>
-
         <div id="info">
             <ul class="collapsible">
                 <li>
@@ -58,35 +56,55 @@
                 <li class="active">
                     <div class="collapsible-header"><i class="material-icons">info_outline</i>Columns</div>
                     <div class="collapsible-body">
-                        <span>
-                            <span class="card-title">Selected Table: {{ table }}</span>
-                            <table class="responsive-table striped">
-                                <thead>
+                        <span class="card-title">Selected Table: {{ table }}</span>
+                        <table class="responsive-table striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Data Type</th>
+                                    <th>Allow NULL</th>
+                                    <th>Default Value</th>
+                                    <th>Primary Key</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in table_data %}
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Datatype</th>
-                                        <th>Allow NULL</th>
-                                        <th>Default Value</th>
-                                        <th>Primary Key</th>
+                                        {% for column in row %}
+                                            {% if loop.index == 3 %}
+                                                <td><i class="material-icons">{% if column == 0 %}check{% else %}clear{% endif %}</i></td>
+                                            {% elif loop.index == 5 %}
+                                                <td><i class="material-icons">{% if column == 1 %}check{% else %}clear{% endif %}</i></td>
+                                            {% else %}
+                                                <td>{{ column }}</td>
+                                            {% endif %}
+                                        {% endfor %}
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in table_data %}
-                                        <tr>
-                                            {% for column in row %}
-                                                {% if loop.index == 3 %}
-                                                    <td><i class="material-icons">{% if column == 0 %}check{% else %}clear{% endif %}</i></td>
-                                                {% elif loop.index == 5 %}
-                                                    <td><i class="material-icons">{% if column == 1 %}check{% else %}clear{% endif %}</i></td>
-                                                {% else %}
-                                                    <td>{{ column }}</td>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </span>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </li>
+                <li>
+                    <div class="collapsible-header"><i class="material-icons">info_outline</i>Table Indexes</div>
+                    <div class="collapsible-body">
+                        <span class="card-title">Selected Table: {{ table }}</span>
+                        <table class="responsive-table striped">
+                            <thead>
+                                <tr>
+                                    <th>Index Name</th>
+                                    <th>Index Column</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index in indexes %}
+                                    <tr>
+                                        <td>{{ index[0] }}</td>
+                                        <td>{{ index[1] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </li>
             </ul>

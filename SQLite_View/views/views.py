@@ -1,5 +1,5 @@
 from SQLite_View import app, user_database, login_manager, header_array
-from flask import render_template, request, redirect, url_for, session
+from flask import render_template, request, redirect, url_for, session, jsonify
 from flask_login import login_required, logout_user, login_user
 from passlib.hash import bcrypt
 from werkzeug.utils import secure_filename
@@ -99,10 +99,10 @@ def tables(database, table):
     table_sql = [x[0] for x in cursor.fetchall() if x[0] is not None]
     indexes = table_sql[1:]
 
-    pattern = re.compile("CREATE INDEX (.*) ON (.*) \(?([^\)]*)")
+    pattern = re.compile("CREATE INDEX (.*) ON .* \(?([^\)]*)")
     found_indexes = []
     for index in indexes:
-        found_indexes.extend(pattern.findall(index[0]))
+        found_indexes.extend(pattern.findall(index))
 
     cursor.execute("SELECT * FROM {}".format(table))
     data = cursor.fetchall()
@@ -122,9 +122,19 @@ def tables(database, table):
                            table_columns=columns,
                            data=data,
                            table_schema=table_sql[0],
-                           indexes=10,
+                           indexes=found_indexes,
                            table_data=table_data,
                            json_data=json_data)
+
+
+@app.route('/delete/', methods=["POST"])
+@login_required
+def delete():
+    database = "databases/{}".format(request.form["database"])
+    if not os.path.exists(database):
+        return jsonify(status_code=403, error="Database does not exist!")
+    os.remove(database)
+    return jsonify(status_code=200)
 
 
 @app.route('/logout/')
