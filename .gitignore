@@ -10,3 +10,5 @@ databases/
 *.pyc
 
 test\.py
+
+dumps/

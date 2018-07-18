@@ -1,5 +1,5 @@
 from SQLite_View import app, user_database, login_manager, header_array
-from flask import render_template, request, redirect, url_for, session, jsonify
+from flask import render_template, request, redirect, url_for, session, jsonify, send_from_directory
 from flask_login import login_required, logout_user, login_user
 from passlib.hash import bcrypt
 from werkzeug.utils import secure_filename
@@ -62,6 +62,21 @@ def upload():
         file.save(path)
         return redirect(url_for("home"))
     return "ohno"
+
+
+@app.route('/download/sql/', methods=["POST"])
+@login_required
+def download_sql():
+    database = request.form["database"]
+    database_path = "databases/{}".format(request.form["database"])
+    sql_path = database.replace(".db", ".sql")
+    c = sqlite3.connect(database_path)
+
+    with open("dumps/{}".format(sql_path), 'w') as f:
+        for line in c.iterdump():
+            f.write('{}\n'.format(line))
+
+    return send_from_directory(os.path.join(os.getcwd(), "dumps"), sql_path, as_attachment=True)
 
 
 @app.route('/tables/<database>')

@@ -30,6 +30,7 @@
                                 <tr>
                                     <th>Database</th>
                                     <th>Select</th>
+                                    <th>Download SQL</th>
                                     <th>Delete</th>
                                 </tr>
                             </thead>
@@ -38,6 +39,13 @@
                                     <tr>
                                         <td>{{ database }}</td>
                                         <td><a class="waves-effect waves-light btn-small blue" href="/tables/{{ database }}"><i class="material-icons right">send</i>Use database</a></td>
+                                        <form action="/download/sql/" method="post">
+                                        <td>
+                                            <button class="waves-effect waves-light btn-small blue" type="submit" name="database" value="{{ database }}">Download SQL
+                                                <i class="material-icons right">file_download</i>
+                                            </button>
+                                        </td>
+                                        </form>
                                         <td><a class="waves-effect waves-light btn-small red" id="{{ database }}" onclick="delete_database(this.id)"><i class="material-icons right">delete_forever</i>Delete database</a></td>
                                     </tr>
                                 {% endfor %}
