@@ -46,7 +46,11 @@
                                             </button>
                                         </td>
                                         </form>
-                                        <td><a class="waves-effect waves-light btn-small red" id="{{ database }}" onclick="delete_database(this.id)"><i class="material-icons right">delete_forever</i>Delete database</a></td>
+                                        <td>
+                                            <a class="waves-effect waves-light btn-small red" id="{{ database }}" onclick="delete_database(this.id)">
+                                                <i class="material-icons right">delete_forever</i>Delete database
+                                            </a>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

@@ -50,6 +50,13 @@ def home():
     return render_template("home.html", header_array=header_array, databases=databases)
 
 
+@app.route('/users/')
+@login_required
+def users():
+    all_users = user_database.fetch_all_users()
+    return render_template("users.html", header_array=header_array, users=all_users)
+
+
 @app.route('/upload/', methods=["POST"])
 @login_required
 def upload():

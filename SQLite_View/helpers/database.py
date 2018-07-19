@@ -16,6 +16,13 @@ class Login:
         if create:
             self.__setup()
 
+    def fetch_all_users(self):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT username FROM User")
+        users = [x[0] for x in cursor.fetchall()]
+        cursor.close()
+        return users
+
     def fetch_user(self, username):
         cursor = self.connection.cursor()
 

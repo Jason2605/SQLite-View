@@ -17,6 +17,7 @@ user_database = Login(not os.path.isfile("sqlite-view.db"))
 
 header_array = [
     ["Home", "/home/", "home"],
+    ["Users", "/users/", "account_circle"],
     ["Logout", "/logout/", "input"]
 ]
 
