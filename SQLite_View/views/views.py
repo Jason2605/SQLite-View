@@ -57,6 +57,22 @@ def users():
     return render_template("users.html", header_array=header_array, users=all_users)
 
 
+@app.route('/users/create/', methods=["POST"])
+@login_required
+def users_create():
+    username = request.form["username"]
+    password = request.form["password"]
+
+    if username and password:
+        if username not in user_database.users:
+            hashed_password = bcrypt.hash(password)
+            user_database.insert_user(username, hashed_password)
+            return jsonify(status_code=200)
+
+        return jsonify(status_code=403, error="Username already exists!")
+    return jsonify(status_code=403, error="Username and/or password not supplied!")
+
+
 @app.route('/upload/', methods=["POST"])
 @login_required
 def upload():

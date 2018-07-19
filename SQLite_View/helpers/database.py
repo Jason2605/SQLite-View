@@ -13,6 +13,7 @@ class User(UserMixin):
 class Login:
     def __init__(self, create=False):
         self.connection = sqlite3.connect("sqlite-view.db", check_same_thread=False)
+        self.users = self.fetch_all_users()
         if create:
             self.__setup()
 
@@ -44,6 +45,14 @@ class Login:
         if user:
             rowid, username, password = user
             return User(rowid, username, password)
+
+    def insert_user(self, username, password):
+        cursor = self.connection.cursor()
+
+        sql_insert_user = "INSERT INTO User VALUES (?, ?)"
+        cursor.execute(sql_insert_user, (username, password))
+        self.connection.commit()
+        cursor.close()
 
     def __setup(self):
         cursor = self.connection.cursor()

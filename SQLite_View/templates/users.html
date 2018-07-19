@@ -1,13 +1,32 @@
 {% extends "header.html" %}
 
 {% block body %}
-        <div class="row">
+
+    <div id="modal1" class="modal">
+        <div class="modal-content">
+            <h4>Create new user</h4>
+            <div class="input-field">
+                <input id="username" type="text" class="validate">
+                <label for="username">Username</label>
+            </div>
+
+            <div class="input-field">
+                <input id="password" type="password" class="validate">
+                <label for="password">Password</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a class="waves-effect waves-green btn-flat" onclick="create_user()">Create user</a>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col s12">
             <div class="card">
                 <div class="card-content">
                     <span class="card-title">Users</span>
                     <div class="input-field">
-                        <button id="upload" class="btn waves-effect waves-light blue">Create User
+                        <button class="btn waves-effect waves-light blue modal-trigger" href="#modal1">Create User
                             <i class="material-icons right">people</i>
                         </button>
                     </div>
@@ -24,17 +43,19 @@
                                 <tr>
                                     <td>{{ user }}</td>
                                     <td>
-                                        <button id="upload" class="btn waves-effect waves-light blue">Edit
+                                        <button class="btn waves-effect waves-light blue">Edit
                                             <i class="material-icons right">edit</i>
                                         </button>
                                     </td>
                                     <td>
                                         {% if user == current_user.username %}
                                         <div class="tooltipped" data-position="bottom" data-tooltip="You cant delete your own user!">
-                                            <a class="btn-small" disabled>Delete</a>
+                                            <a class="btn-small" disabled>Delete
+                                                <i class="material-icons right">delete_forever</i>
+                                            </a>
                                         </div>
                                         {% else %}
-                                            <button id="upload" class="btn waves-effect waves-light red">Delete
+                                            <button class="btn waves-effect waves-light red">Delete
                                                 <i class="material-icons right">delete_forever</i>
                                             </button>
                                         {% endif %}
@@ -55,5 +76,32 @@
             let elems = document.querySelectorAll('.tooltipped');
             M.Tooltip.init(elems, {});
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let elems = document.querySelectorAll('.modal');
+            M.Modal.init(elems, {});
+        });
+
+        function create_user() {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+
+            if (username && password) {
+                axios.post(
+                    '/users/create/',
+                    `username=${username}&password=${password}`
+                ).then(function (response) {
+                    if (response.data.status_code === 200) {
+                        M.toast({html: "User successfully created!", classes: "green"});
+                        M.Modal.getInstance(document.getElementById("modal1")).close();
+                    } else {
+                        M.toast({html: response.data.error, classes: "red"});
+                    }
+                })
+            } else {
+                M.toast({html: "Username and/or password not filled in!", classes: "red"});
+            }
+        }
+
     </script>
 {% endblock %}
