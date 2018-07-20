@@ -24,7 +24,7 @@
                     <img src="{{ url_for('static', filename='img/user-img-background.jpg') }}">
                 </div>
                 <a><img class="circle" src="{{ url_for('static', filename='img/user.png') }}"></a>
-                <a><span class="white-text name">Logged in as: {{ current_user.username }}</span></a>
+                <a><span id="logged-in-msg" class="white-text name">Logged in as: {{ current_user.username }}</span></a>
                 <a><span class="white-text email"></span></a>
             </div>
         </li>

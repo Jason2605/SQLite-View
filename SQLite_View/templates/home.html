@@ -47,7 +47,7 @@
                                         </td>
                                         </form>
                                         <td>
-                                            <a class="waves-effect waves-light btn-small red" id="{{ database }}" onclick="delete_database(this.id)">
+                                            <a class="waves-effect waves-light btn-small red" onclick="delete_database(this.id, {{ database }})">
                                                 <i class="material-icons right">delete_forever</i>Delete database
                                             </a>
                                         </td>
@@ -66,14 +66,14 @@
             document.getElementById('upload').disabled = false;
         }
 
-        function delete_database(id) {
+        function delete_database(element, database) {
             axios.post(
                 '/delete/',
-                'database=' + id
+                'database=' + database
             ).then(function (response) {
                 if (response.data.status_code === 200) {
                     let table = document.getElementById("databases");
-                    table.removeChild(document.getElementById(id).closest("tr"));
+                    table.removeChild(element.closest("tr"));
                     M.toast({html: "Database successfully deleted!", classes: "green"})
                 } else {
                     M.toast({html: response.data.error, classes: "red"});

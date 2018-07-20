@@ -32,7 +32,7 @@ def login():
     if not username or not password:
         return redirect(url_for("login"))
 
-    user_obj = user_database.fetch_user(username)
+    user_obj = user_database.fetch_user_username(username)
 
     if not user_obj:
         return redirect(url_for("login"))
@@ -71,6 +71,41 @@ def users_create():
 
         return jsonify(status_code=403, error="Username already exists!")
     return jsonify(status_code=403, error="Username and/or password not supplied!")
+
+
+@app.route('/users/delete/', methods=["POST"])
+@login_required
+def users_delete():
+    username = request.form["username"]
+
+    if username:
+        if username in user_database.users:
+            user_database.delete_user(username)
+            return jsonify(status_code=200)
+        return jsonify(status_code=403, error="User does not exist!")
+    return jsonify(status_code=403, error="Username not supplied!")
+
+
+@app.route('/users/edit/', methods=["POST"])
+@login_required
+def users_edit():
+    current_username = request.form["current_username"]
+    username = request.form["username"]
+    password = request.form["password"]
+
+    if password:
+        password = bcrypt.hash(password)
+
+    if username or password:
+        if current_username != username:
+            if username in user_database.users:
+                return jsonify(status_code=403, error="Username already exists!")
+        else:
+            username = ""
+
+        user_database.edit_user(username, password, current_username)
+        return jsonify(status_code=200)
+    return jsonify(status_code=403, error="Username or password not supplied!")
 
 
 @app.route('/upload/', methods=["POST"])

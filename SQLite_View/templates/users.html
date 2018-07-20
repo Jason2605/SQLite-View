@@ -2,7 +2,7 @@
 
 {% block body %}
 
-    <div id="modal1" class="modal">
+    <div id="modal-create" class="modal">
         <div class="modal-content">
             <h4>Create new user</h4>
             <div class="input-field">
@@ -21,13 +21,33 @@
         </div>
     </div>
 
+    <div id="modal-edit" class="modal">
+        <div class="modal-content">
+            <h4 id="modal-edit-title"></h4>
+            <div class="input-field">
+                <input id="modal-edit-username" type="text" class="validate valid" value="">
+                <input id="modal-edit-username-old" value="" hidden>
+                <label id="modal-edit-label" for="modal-edit-username">Username</label>
+            </div>
+
+            <div class="input-field">
+                <input id="modal-edit-password" type="password" class="validate">
+                <label for="modal-edit-password">Password</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a class="modal-close waves-effect btn-flat">Close</a>
+            <a class="waves-effect btn-flat" onclick="edit_user()">Edit user</a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col s12">
             <div class="card">
                 <div class="card-header"><h5>Users</h5></div>
                 <div class="card-content">
                     <div class="input-field">
-                        <button class="btn waves-effect waves-light blue modal-trigger" href="#modal1">Create User
+                        <button class="btn waves-effect waves-light blue modal-trigger" href="#modal-create">Create User
                             <i class="material-icons right">people</i>
                         </button>
                     </div>
@@ -39,12 +59,12 @@
                                 <th>Delete</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="users">
                             {% for user in users %}
                                 <tr>
-                                    <td>{{ user }}</td>
+                                    <td id="{{ user }}">{{ user }}</td>
                                     <td>
-                                        <button class="btn waves-effect waves-light blue">Edit
+                                        <button id="{{ user }}-button" class="btn waves-effect waves-light blue" onclick="populate_modal('{{ user }}')">Edit
                                             <i class="material-icons right">edit</i>
                                         </button>
                                     </td>
@@ -56,7 +76,7 @@
                                             </a>
                                         </div>
                                         {% else %}
-                                            <button class="btn waves-effect waves-light red">Delete
+                                            <button class="btn waves-effect waves-light red" onclick="delete_user(this, '{{ user }}')">Delete
                                                 <i class="material-icons right">delete_forever</i>
                                             </button>
                                         {% endif %}
@@ -94,13 +114,93 @@
                 ).then(function (response) {
                     if (response.data.status_code === 200) {
                         M.toast({html: "User successfully created!", classes: "green"});
-                        M.Modal.getInstance(document.getElementById("modal1")).close();
+                        M.Modal.getInstance(document.getElementById("modal-create")).close();
+                        add_row(username);
                     } else {
                         M.toast({html: response.data.error, classes: "red"});
                     }
                 })
             } else {
                 M.toast({html: "Username and/or password not filled in!", classes: "red"});
+            }
+        }
+
+        function add_row(username) {
+            let table = document.getElementById("users");
+            let row = table.insertRow();
+            let username_row = row.insertCell(0);
+            let edit_button = row.insertCell(1);
+            let delete_button = row.insertCell(2);
+
+            username_row.innerHTML = username;
+            edit_button.innerHTML = `<button class="btn waves-effect waves-light blue">Edit<i class="material-icons right">edit</i></button>`;
+            delete_button.innerHTML = `<button class="btn waves-effect waves-light red" onclick="delete_user(this, '${username}')">Delete<i class="material-icons right">delete_forever</i></button>`;
+
+        }
+
+        function delete_user(element, username) {
+            if (username) {
+                axios.post(
+                    '/users/delete/',
+                    `username=${username}`
+                ).then(function (response) {
+                    if (response.data.status_code === 200) {
+                        M.toast({html: "User successfully deleted!", classes: "green"});
+                    } else {
+                        M.toast({html: response.data.error, classes: "red"});
+                    }
+                })
+            } else {
+                M.toast({html: "Username not filled in!", classes: "red"});
+            }
+            let table = document.getElementById("users");
+            table.removeChild(element.closest("tr"));
+        }
+
+        function populate_modal(user) {
+            document.getElementById("modal-edit-title").value = "Edit - " + user;
+            document.getElementById("modal-edit-username").value = user;
+            document.getElementById("modal-edit-username-old").value = user;
+            document.getElementById("modal-edit-label").className = "active";
+            M.Modal.getInstance(document.getElementById("modal-edit")).open();
+        }
+
+        function edit_user() {
+            let username = document.getElementById("modal-edit-username").value;
+            let current_username = document.getElementById("modal-edit-username-old").value;
+            let password = document.getElementById("modal-edit-password").value;
+
+            if (username || password) {
+                if (username === '{{ current_user.username }}' && !password) {
+                    M.toast({html: "Nothing to change!", classes: "red"});
+                    return;
+                }
+                axios.post(
+                    '/users/edit/',
+                    `username=${username}&password=${password}&current_username=${current_username}`
+                ).then(function (response) {
+                    if (response.data.status_code === 200) {
+                        M.toast({html: "User successfully edited!", classes: "green"});
+
+                        if (username !== current_username) {
+                            let row = document.getElementById(current_username);
+                            let button = document.getElementById(`${current_username}-button`)
+                            row.id = username;
+                            row.innerText = username;
+
+                            button.setAttribute("onclick", `populate_modal('${username}')`);
+                            button.id = `${username}-button`;
+
+                            if (username !== '{{ current_user.username }}') {
+                                document.getElementById("logged-in-msg").innerText = `Logged in as: ${username}`;
+                            }
+                        }
+
+                        M.Modal.getInstance(document.getElementById("modal-edit")).close();
+                    } else {
+                        M.toast({html: response.data.error, classes: "red"});
+                    }
+                })
             }
         }
 
