@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SQLite View</title>
+        <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&amp;subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
+        <link href="{{ url_for('static', filename='css/errors.css') }}" rel="stylesheet">
+    </head>
+    <body class="four-zero-four">
+        <div class="four-zero-four-container">
+            <div class="error-code">{{ error }}</div>
+            <div class="error-message">{{ error_msg }}</div>
+            <div class="button-place">
+                <a href="/home/" class="btn">GO TO HOMEPAGE</a>
+            </div>
+        </div>
+    </body>
+</html>
