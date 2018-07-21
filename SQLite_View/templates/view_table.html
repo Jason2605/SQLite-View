@@ -28,7 +28,7 @@
                                     {% endfor %}
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="sql-data">
                                 {% for row in data %}
                                     <tr>
                                         {% for column in row %}
@@ -38,6 +38,12 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        <button id="previous-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" disabled>Previous
+                            <i class="material-icons right">file_upload</i>
+                        </button>
+                        <button id="next-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
+                            <i class="material-icons right">file_upload</i>
+                        </button>
                     </div>
                 </li>
                 <li>
@@ -115,12 +121,66 @@
 
 {% block extraJS %}
     <script>
-          document.addEventListener('DOMContentLoaded', function() {
-              let elems = document.querySelectorAll('.collapsible');
-              M.Collapsible.init(elems, {});
+        document.addEventListener('DOMContentLoaded', function() {
+            let elems = document.querySelectorAll('.collapsible');
+            M.Collapsible.init(elems, {});
 
-              let elem = document.querySelector('.tabs');
-              M.Tabs.init(elem, {});
-          });
+            let elem = document.querySelector('.tabs');
+            M.Tabs.init(elem, {});
+        });
+
+        function replace_table(element) {
+
+            let path = element.value;
+            let id = element.id.split("-");
+
+            let type = id[0];
+            let page = id[1];
+
+            //console.log(page);
+
+            axios.get(path + page).then(function (response) {
+                let new_tbody = document.createElement('tbody');
+                new_tbody.id = "sql-data";
+                let data = response.data.data;
+
+                for (let i = 0; i < data.length; i++) {
+                    let row = new_tbody.insertRow();
+                    for (let j = 0; j < data[i].length; j++) {
+                        row.insertCell(j).innerText = data[i][j];
+                    }
+                }
+
+                if (type === "previous") {
+                    console.log(page);
+                    document.getElementById("next-" + (parseInt(page) + 2)).disabled = (data.length < 50);
+                } else {
+                    document.getElementById("next-" + page).disabled = (data.length < 50);
+                }
+
+
+                if (data.length !== 0) {
+                    let table = document.getElementById("sql-data");
+                    table.parentNode.replaceChild(new_tbody, table);
+
+                    after_get();
+                }
+            });
+
+            function after_get() {
+                page = parseInt(page);
+
+                if (type === "previous") {
+                    element.id = "previous-" + (page - 1);
+                    document.getElementById('next-' + (page + 2)).id = "next-" + (page + 1);
+                } else {
+                    element.id = "next-" + (page + 1);
+                    document.getElementById('previous-' + (page - 2)).id = "previous-" + (page - 1);
+                }
+
+                document.getElementById("previous-" + (page - 1)).disabled = (page === 1);
+            }
+        }
+
     </script>
 {% endblock %}

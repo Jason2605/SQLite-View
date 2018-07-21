@@ -159,14 +159,29 @@ def to_json(data, columns):
     return json_list
 
 
-@app.route('/tables/<table>/<database>')
+@app.route('/tables/<table>/<database>/<int:page>/')
 @login_required
-def tables(database, table):
-    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
-    cursor = connection.cursor()
+def table_data(table, database, page):
 
     if table not in session["tables"]:
         return "ERROR!!!"
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM {} LIMIT ?, ?".format(table), ((page - 1) * 50, 50))
+    return jsonify(status_code=200, data=cursor.fetchall())
+
+
+@app.route('/tables/<table>/<database>/')
+@login_required
+def tables(database, table):
+
+    if table not in session["tables"]:
+        return "ERROR!!!"
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
 
     cursor.execute("SELECT sql FROM sqlite_master WHERE tbl_name = ?", (table,))
     table_sql = [x[0] for x in cursor.fetchall() if x[0] is not None]
@@ -177,7 +192,7 @@ def tables(database, table):
     for index in indexes:
         found_indexes.extend(pattern.findall(index))
 
-    cursor.execute("SELECT * FROM {}".format(table))
+    cursor.execute("SELECT * FROM {} LIMIT 0, 50".format(table))
     data = cursor.fetchall()
 
     cursor.execute("PRAGMA TABLE_INFO({})".format(table))
@@ -191,6 +206,7 @@ def tables(database, table):
 
     return render_template("view_table.html",
                            header_array=header_array,
+                           database=database,
                            table=table,
                            table_columns=columns,
                            data=data,
