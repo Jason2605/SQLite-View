@@ -5,6 +5,7 @@ A web interface to manage multiple SQLite databases.
 To install SQLite-View first clone this repository and move to that directory.
 
 `$ git clone https://github.com/Jason2605/SQLite-View.git`
+
 `$ cd SQLite-View`
 
 Then in your favourite python virtual environment, install the requirements with pip.
