@@ -38,12 +38,14 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                        <button id="previous-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" disabled>Previous
-                            <i class="material-icons right">file_upload</i>
-                        </button>
-                        <button id="next-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
-                            <i class="material-icons right">file_upload</i>
-                        </button>
+                        <div class="input-field">
+                            <button id="previous-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" disabled>Previous
+                                <i class="material-icons right">navigate_before</i>
+                            </button>
+                            <button id="next-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
+                                <i class="material-icons right">navigate_next</i>
+                            </button>
+                        </div>
                     </div>
                 </li>
                 <li>

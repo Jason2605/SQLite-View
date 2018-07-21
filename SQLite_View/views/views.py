@@ -227,6 +227,24 @@ def delete():
     return jsonify(status_code=200)
 
 
+@app.route('/delete/table/', methods=["POST"])
+@login_required
+def delete_table():
+    database = "databases/{}".format(request.form["database"])
+    table = request.form["table"]
+
+    if not os.path.exists(database):
+        return jsonify(status_code=403, error="Database does not exist!")
+
+    connection = sqlite3.connect(database, check_same_thread=False)
+    cursor = connection.cursor()
+
+    if table in session["tables"]:
+        cursor.execute("DROP TABLE {}".format(table))
+        return jsonify(status_code=200)
+    return jsonify(status_code=403, error="Table does not exist!")
+
+
 @app.route('/logout/')
 @login_required
 def logout():

@@ -11,13 +11,23 @@
                             <tr>
                                 <th>Tables</th>
                                 <th>Select</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tables">
                             {% for table in tables %}
                                 <tr>
                                     <td>{{ table }}</td>
-                                    <td><a class="waves-effect waves-light btn-small blue" href="/tables/{{ table }}/{{ database }}"><i class="material-icons right">send</i>Use database</a></td>
+                                    <td>
+                                        <a class="waves-effect waves-light btn-small blue" href="/tables/{{ table }}/{{ database }}">
+                                            <i class="material-icons right">send</i>Use database
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a class="waves-effect waves-light btn-small red" onclick="delete_table(this, '{{ table }}')">
+                                            <i class="material-icons right">delete_forever</i>Delete table
+                                        </a>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -26,4 +36,21 @@
              </div>
         </div>
     </div>
+
+    <script>
+        function delete_table(element, table) {
+            axios.post(
+                '/delete/table/',
+                `database={{ database }}&table=${table}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    let table = document.getElementById("tables");
+                    table.removeChild(element.closest("tr"));
+                    M.toast({html: "Table successfully dropped!", classes: "green"})
+                } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+    </script>
 {% endblock %}
