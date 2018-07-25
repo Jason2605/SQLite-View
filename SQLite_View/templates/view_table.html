@@ -6,129 +6,259 @@
 
 {% block body %}
 
-<div class="card">
-    <div class="card-header"><h5>Table: {{ table }}</h5></div>
-    <div class="card-tabs">
-        <ul class="tabs tabs-fixed-width">
-            <li class="tab"><a class="active" href="#info">Table information</a></li>
-            <li class="tab"><a href="#data">Data</a></li>
-        </ul>
-    </div>
-    <div class="card-content">
-        <div id="data">
-            <ul class="collapsible">
-                <li class="active">
-                    <div class="collapsible-header"><i class="material-icons">description</i>Table Format</div>
-                    <div class="collapsible-body overflow">
-                        <table class="responsive-table">
-                            <thead>
-                                <tr>
-                                    {% for column in table_columns %}
-                                        <th>{{ column }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody id="sql-data">
-                                {% for row in data %}
-                                    <tr>
-                                        {% for column in row %}
-                                        <td>{{ column }}</td>
-                                        {% endfor %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <div class="input-field">
-                            <button id="previous-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" disabled>Previous
-                                <i class="material-icons right">navigate_before</i>
-                            </button>
-                            <button id="next-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
-                                <i class="material-icons right">navigate_next</i>
-                            </button>
-                        </div>
-                    </div>
-                </li>
-                <li>
-                    <div class="collapsible-header"><i class="material-icons">developer_board</i>JSON Format</div>
-                    <div class="collapsible-body">
-                        <pre>{{ json_data }}</pre>
-                    </div>
-                </li>
-            </ul>
+    <div id="modal-column" class="modal">
+        <div class="modal-content">
+            <h4>New column</h4>
+            <div class="input-field">
+                <input id="column-name" type="text">
+                <label for="column-name">Name</label>
+            </div>
+            <div class="input-field">
+                <select id="column-type">
+                    <option value="" disabled selected>Choose data type</option>
+                    <option value="TEXT">Text</option>
+                    <option value="INTEGER">Integer</option>
+                    <option value="REAL">Real</option>
+                    <option value="BLOB">Blob</option>
+                </select>
+                <label for="column-type">Data type</label>
+            </div>
+            <div class="input-field">
+                <select id="column-null">
+                    <option value="" disabled selected>Allow null</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+                <label for="column-null">Allow null</label>
+            </div>
+            <div class="input-field">
+                <input id="column-default" type="text">
+                <label for="column-default">Default value</label>
+            </div>
         </div>
-        <div id="info">
-            <ul class="collapsible">
-                <li>
-                    <div class="collapsible-header"><i class="material-icons">settings</i>SQL Schema</div>
-                    <div class="collapsible-body"><span><pre>{{ table_schema }}</pre>{% if sql_indexes %}<pre>{{ sql_indexes }}{% endif %}</pre></span></div>
-                </li>
-                <li class="active">
-                    <div class="collapsible-header"><i class="material-icons">info_outline</i>Columns</div>
-                    <div class="collapsible-body">
-                        <table class="responsive-table striped">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Data Type</th>
-                                    <th>Allow NULL</th>
-                                    <th>Default Value</th>
-                                    <th>Primary Key</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in table_data %}
-                                    <tr>
-                                        {% for column in row %}
-                                            {% if loop.index == 3 %}
-                                                <td><i class="material-icons">{% if column == 0 %}check{% else %}clear{% endif %}</i></td>
-                                            {% elif loop.index == 5 %}
-                                                <td><i class="material-icons">{% if column == 1 %}check{% else %}clear{% endif %}</i></td>
-                                            {% else %}
-                                                <td>{{ column }}</td>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </li>
-                <li>
-                    <div class="collapsible-header"><i class="material-icons">info_outline</i>Table Indexes</div>
-                    <div class="collapsible-body">
-                        <table class="responsive-table striped">
-                            <thead>
-                                <tr>
-                                    <th>Index Name</th>
-                                    <th>Index Column</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for index in indexes %}
-                                    <tr>
-                                        <td>{{ index[0] }}</td>
-                                        <td>{{ index[1] }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </li>
-            </ul>
+        <div class="modal-footer">
+            <a class="modal-close waves-effect btn-flat">Close</a>
+            <a class="waves-effect btn-flat" onclick="add_column()">Add column</a>
         </div>
     </div>
-</div>
 
+    <div id="modal-column-rename" class="modal">
+        <div class="modal-content">
+            <h4>Rename column</h4>
+            <div class="input-field">
+                <input id="column-rename-old" type="text" hidden>
+                <input id="column-rename" type="text">
+                <label id="column-rename-label" for="column-rename">Name</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a class="modal-close waves-effect btn-flat">Close</a>
+            <a class="waves-effect btn-flat" onclick="rename_column()">Rename column</a>
+        </div>
+    </div>
+
+    <div id="modal-index" class="modal">
+        <div class="modal-content">
+            <h4>Add index</h4>
+            <div class="input-field">
+                <input id="index-name" type="text">
+                <label for="index-name">Name</label>
+            </div>
+            <select id="index-column">
+                <option value="" disabled selected>Choose column to index</option>
+                {% for column in table_columns %}
+                    <option value="{{ column }}">{{ column }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="modal-footer">
+            <a class="modal-close waves-effect btn-flat">Close</a>
+            <a class="waves-effect btn-flat" onclick="add_index()">Add index</a>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-header"><h5>Table: {{ table }}</h5></div>
+        <div class="card-tabs">
+            <ul class="tabs tabs-fixed-width">
+                <li class="tab"><a class="active" href="#info">Table information</a></li>
+                <li class="tab"><a href="#data">Data</a></li>
+            </ul>
+        </div>
+        <div class="card-content">
+            <div id="data">
+                <ul class="collapsible">
+                    <li class="active">
+                        <div class="collapsible-header"><i class="material-icons">description</i>Table Format</div>
+                        <div class="collapsible-body overflow">
+
+                            <a class='dropdown-trigger btn-small blue' href='#' data-target='dropdown1'>Toggle columns</a>
+
+                            <ul id='dropdown1' class='dropdown-content'>
+                            {% for column in table_columns %}
+                                <li style="padding: 10px" onclick="toggle_table(this, {{ loop.index }}, event)">
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" checked="checked"/>
+                                            <span>{{ column }}</span>
+                                        </label>
+                                    </p>
+                                </li>
+                            {% endfor %}
+                            </ul>
+
+                            <table class="responsive-table">
+                                <thead>
+                                    <tr>
+                                        {% for column in table_columns %}
+                                            <th class="{{ loop.index }}">{{ column }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody id="sql-data">
+                                    {% for row in data %}
+                                        <tr>
+                                            {% for column in row %}
+                                            <td class="{{ loop.index }}">{{ column }}</td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div class="input-field">
+                                <button id="previous-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" disabled>Previous
+                                    <i class="material-icons right">navigate_before</i>
+                                </button>
+                                <button id="next-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_table(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
+                                    <i class="material-icons right">navigate_next</i>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="collapsible-header"><i class="material-icons">developer_board</i>JSON Format</div>
+                        <div class="collapsible-body">
+                            <pre>{{ json_data }}</pre>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div id="info">
+                <ul class="collapsible">
+                    <li>
+                        <div class="collapsible-header"><i class="material-icons">settings</i>SQL Schema</div>
+                        <div class="collapsible-body"><span><pre>{{ table_schema }}</pre>{% if sql_indexes %}<pre>{{ sql_indexes }}{% endif %}</pre></span></div>
+                    </li>
+                    <li class="active">
+                        <div class="collapsible-header"><i class="material-icons">info_outline</i>Columns</div>
+                        <div class="collapsible-body">
+                            <button class="btn-small waves-effect waves-light blue modal-trigger" href="#modal-column">Add column
+                                <i class="material-icons right">add</i>
+                            </button>
+
+                            <table class="responsive-table striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Data Type</th>
+                                        <th>Allow NULL</th>
+                                        <th>Default Value</th>
+                                        <th>Primary Key</th>
+                                        <th>Rename</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="columns">
+                                    {% for row in table_data %}
+                                        <tr>
+                                            {% for column in row %}
+                                                {% if loop.index == 1 %}
+                                                    <td id="column-{{ column }}">{{ column }}</td>
+                                                {% elif loop.index == 3 %}
+                                                    <td><i class="material-icons">{% if column == 0 %}check{% else %}clear{% endif %}</i></td>
+                                                {% elif loop.index == 4 and column is string and column.startswith("'") %}
+                                                    <td>{{ column[1:-1].replace("''", "'")}}</td>
+                                                {% elif loop.index == 5 %}
+                                                    <td><i class="material-icons">{% if column == 1 %}check{% else %}clear{% endif %}</i></td>
+                                                {% else %}
+                                                    <td>{{ column }}</td>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <td>
+                                                <button class="waves-effect waves-light btn-small blue modal-trigger" href="#modal-column-rename" onclick="populate_modal('{{ row[0] }}')">Rename
+                                                    <i class="material-icons right">delete</i>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                {% if row[4] == 0 %}
+                                                    <button class="waves-effect waves-light btn-small red" onclick="delete_column(this, '{{ row[0] }}')">Delete
+                                                        <i class="material-icons right">delete</i>
+                                                    </button>
+                                                {% else %}
+                                                    <div class="tooltipped" data-position="bottom" data-tooltip="You can't delete the primary key!">
+                                                        <button class="waves-effect waves-light btn-small red" disabled>Delete
+                                                            <i class="material-icons right">delete</i>
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="collapsible-header"><i class="material-icons">info_outline</i>Table Indexes</div>
+                        <div class="collapsible-body">
+                            <button class="btn-small waves-effect waves-light blue modal-trigger" href="#modal-index">Add index
+                                <i class="material-icons right">add</i>
+                            </button>
+                            <table class="responsive-table striped">
+                                <thead>
+                                    <tr>
+                                        <th>Index Name</th>
+                                        <th>Index Column</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for index in indexes %}
+                                        <tr>
+                                            <td>{{ index[0] }}</td>
+                                            <td>{{ index[1] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extraJS %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let elems = document.querySelectorAll('.collapsible');
-            M.Collapsible.init(elems, {});
+            let elem = document.querySelectorAll('.collapsible');
+            M.Collapsible.init(elem, {});
 
-            let elem = document.querySelector('.tabs');
+            elem = document.querySelector('.tabs');
             M.Tabs.init(elem, {});
+
+            elem = document.querySelectorAll('.dropdown-trigger');
+            M.Dropdown.init(elem, {constrainWidth: false, coverTrigger: false});
+
+            elem = document.querySelectorAll('.modal');
+            M.Modal.init(elem, {});
+
+            elem = document.querySelectorAll('select');
+            M.FormSelect.init(elem, {});
+
+            elem = document.querySelectorAll('.tooltipped');
+            M.Tooltip.init(elem, {html: "You cant delete the primary key!"});
         });
 
         function replace_table(element) {
@@ -139,8 +269,6 @@
             let type = id[0];
             let page = id[1];
 
-            //console.log(page);
-
             axios.get(path + page).then(function (response) {
                 let new_tbody = document.createElement('tbody');
                 new_tbody.id = "sql-data";
@@ -149,12 +277,13 @@
                 for (let i = 0; i < data.length; i++) {
                     let row = new_tbody.insertRow();
                     for (let j = 0; j < data[i].length; j++) {
-                        row.insertCell(j).innerText = data[i][j];
+                        let cell = row.insertCell(j);
+                        cell.innerText = data[i][j];
+                        cell.className = (j + 1).toString();
                     }
                 }
 
                 if (type === "previous") {
-                    console.log(page);
                     document.getElementById("next-" + (parseInt(page) + 2)).disabled = (data.length < 50);
                 } else {
                     document.getElementById("next-" + page).disabled = (data.length < 50);
@@ -184,5 +313,98 @@
             }
         }
 
+        function toggle_table(element, column, event) {
+            event.preventDefault();
+            element = element.firstElementChild.firstElementChild.firstElementChild;
+            element.checked = !element.checked;
+            let elements = document.getElementsByClassName(column);
+            let display_element = element.checked ? "table-cell" : "none";
+
+            [].forEach.call(elements, function (element) {
+                element.style.display = display_element;
+            });
+        }
+
+        function add_column() {
+            let name = document.getElementById("column-name").value;
+            let type = document.getElementById("column-type").value;
+            let allow_null = document.getElementById("column-null").value;
+            let default_value = document.getElementById("column-default").value;
+
+            axios.post(
+                '/tables/column/add/',
+                `database={{ database }}&table={{ table }}&name=${name}&type=${type}&null=${allow_null}&default=${default_value}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Column successfully added!", classes: "green"});
+                    M.Modal.getInstance(document.getElementById("modal-column")).close();
+                } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+
+        function delete_column(element, column_name) {
+            axios.post(
+                '/tables/column/delete/',
+                `database={{ database }}&table={{ table }}&columns={{ table_columns }}&name=${column_name}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Column successfully deleted!", classes: "green"});
+
+                    let table = document.getElementById("columns");
+                    table.removeChild(element.closest("tr"));
+                } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+
+        function populate_modal(column) {
+            document.getElementById("column-rename-old").value = column;
+            document.getElementById("column-rename").value = column;
+            document.getElementById("column-rename-label").className = "active";
+        }
+
+        function rename_column() {
+            let old_name = document.getElementById("column-rename-old").value;
+            let name = document.getElementById("column-rename").value;
+
+            if (name !== old_name) {
+                axios.post(
+                    '/tables/column/rename/',
+                    `database={{ database }}&table={{ table }}&old_name=${old_name}&name=${name}`
+                ).then(function (response) {
+                    if (response.data.status_code === 200) {
+                        M.toast({html: "Column successfully renamed!", classes: "green"});
+                        let column = document.getElementById(`column-${old_name}`);
+                        column.innerText = name;
+                        column.id = `column-${name}`;
+                        M.Modal.getInstance(document.getElementById("modal-column-rename")).close();
+                    } else {
+                        M.toast({html: response.data.error, classes: "red"});
+                    }
+                })
+            } else {
+                M.toast({html: "Name has not changed!", classes: "red"});
+            }
+        }
+
+        function add_index() {
+            let name = document.getElementById("index-name").value;
+            let column = document.getElementById("index-column").value;
+
+            axios.post(
+                '/tables/index/add/',
+                `database={{ database }}&table={{ table }}&name=${name}&column=${column}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Index successfully created!", classes: "green"});
+                    M.Modal.getInstance(document.getElementById("modal-index")).close();
+                } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
     </script>
 {% endblock %}

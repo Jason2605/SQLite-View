@@ -96,10 +96,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             let elems = document.querySelectorAll('.tooltipped');
             M.Tooltip.init(elems, {});
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            let elems = document.querySelectorAll('.modal');
+            elems = document.querySelectorAll('.modal');
             M.Modal.init(elems, {});
         });
 

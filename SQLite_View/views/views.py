@@ -152,6 +152,152 @@ def find_tables(database):
     return render_template("tables.html", header_array=header_array, tables=all_tables, database=database)
 
 
+@app.route('/tables/column/add/', methods=["POST"])
+@login_required
+def add_column():
+    database = request.form["database"]
+    table = request.form["table"]
+    name = request.form["name"]
+    data_type = request.form["type"]
+    allow_null = request.form["null"]
+    default_value = request.form["default"]
+
+    if " " in default_value and data_type == "TEXT":
+        default_value = "'{}'".format(default_value.replace("'", "''"))
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    sql_add_column = "ALTER TABLE {} ADD COLUMN {} {} {} {}".format(
+        table, name, data_type,
+        "NOT NULL" if allow_null == "false" else "",
+        "DEFAULT {}".format(default_value) if default_value != "" else "").strip()
+
+    try:
+        session["columns"].append(name)
+        cursor.execute(sql_add_column)
+        connection.commit()
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
+@app.route('/tables/column/delete/', methods=["POST"])
+@login_required
+def delete_column():
+    database = request.form["database"]
+    table = request.form["table"]
+    name = request.form["name"]
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT sql FROM sqlite_master WHERE tbl_name = ?", (table,))
+    sql = [x[0] for x in cursor.fetchall() if x[0] is not None]
+    table_schema = sql[0]
+    column_index = table_schema.find("(")
+    table_schema_columns = table_schema[column_index:].split(",")
+
+    for index, column in enumerate(table_schema_columns):
+        if name in column:
+            del table_schema_columns[index]
+
+    table_schema = "{}{}".format(table_schema[:column_index], ",".join(table_schema_columns))
+
+    if not table_schema.endswith(")"):
+        table_schema += "\n)"
+
+    try:
+        session["columns"].remove(name)
+        cursor.execute("ALTER TABLE {} RENAME TO tmp".format(table))
+        cursor.execute(table_schema)
+        cursor.execute("INSERT INTO {} SELECT {} FROM tmp".format(table, ", ".join(session["columns"])))
+        cursor.execute("DROP TABLE tmp")
+
+        for index in sql[1:]:
+            if not "({})".format(name) in index:
+                cursor.execute(index)
+
+        connection.commit()
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
+@app.route('/tables/column/rename/', methods=["POST"])
+@login_required
+def rename_column():
+    database = request.form["database"]
+    table = request.form["table"]
+    old_name = request.form["old_name"]
+    new_name = request.form["name"]
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT sql FROM sqlite_master WHERE tbl_name = ?", (table,))
+    sql = [x[0] for x in cursor.fetchall() if x[0] is not None]
+
+    table_schema = sql[0].replace(" {} ".format(old_name), " {} ".format(new_name))
+
+    try:
+        tmp = session["columns"][:]
+        tmp.remove(old_name)
+        tmp.append(new_name)
+
+        cursor.execute("ALTER TABLE {} RENAME TO tmp".format(table))
+        cursor.execute(table_schema)
+        cursor.execute("INSERT INTO {}({}) SELECT {} FROM tmp".format(table, ", ".join(tmp), ", ".join(session["columns"])))
+        cursor.execute("DROP TABLE tmp")
+
+        for index in sql[1:]:
+            index = index.replace("({})".format(old_name), "({})".format(new_name))
+            cursor.execute(index)
+
+        connection.commit()
+
+        session["columns"] = tmp
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
+@app.route('/tables/index/add/', methods=["POST"])
+@login_required
+def add_index():
+    database = request.form["database"]
+    table = request.form["table"]
+    name = request.form["name"]
+    column = request.form["column"]
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    try:
+        sql_create_index = "CREATE INDEX {} ON {} (test)".format(name, table, column)
+        cursor.execute(sql_create_index)
+        connection.commit()
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
 def to_json(data, columns):
     json_list = []
     for row in data:
@@ -198,6 +344,8 @@ def tables(database, table):
     cursor.execute("PRAGMA TABLE_INFO({})".format(table))
     table_data = [x[1:] for x in cursor.fetchall()]
     columns = [x[0] for x in table_data]
+    session["columns"] = columns
+    session["indexes"] = found_indexes
 
     json_data = json.dumps(to_json(data, columns), indent=4)
 
