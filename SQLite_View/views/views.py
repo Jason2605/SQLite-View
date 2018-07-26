@@ -274,6 +274,30 @@ def rename_column():
     return jsonify(status_code=200)
 
 
+@app.route('/tables/rows/delete/', methods=["POST"])
+@login_required
+def delete_row():
+    database = request.form["database"]
+    table = request.form["table"]
+    rowid = request.form["rowid"]
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+    sql_delete_row = "DELETE FROM {} WHERE rowid = {}".format(table, rowid)
+    print(sql_delete_row)
+
+    try:
+        cursor.execute(sql_delete_row)
+        connection.commit()
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
 @app.route('/tables/index/add/', methods=["POST"])
 @login_required
 def add_index():
@@ -306,8 +330,9 @@ def to_json(data, columns):
 
 
 @app.route('/tables/<table>/<database>/<int:page>/')
+@app.route('/tables/<table>/<database>/<int:page>/<json_data>/')
 @login_required
-def table_data(table, database, page):
+def table_data(table, database, page, json_data=False):
 
     if table not in session["tables"]:
         return "ERROR!!!"
@@ -315,8 +340,14 @@ def table_data(table, database, page):
     connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM {} LIMIT ?, ?".format(table), ((page - 1) * 50, 50))
-    return jsonify(status_code=200, data=cursor.fetchall())
+    cursor.execute("SELECT *, rowid FROM {} LIMIT ?, ?".format(table), ((page - 1) * 50, 50))
+    data = cursor.fetchall()
+    length = len(data)
+
+    if json_data:
+        data = json.dumps(to_json(data, session["columns"]), indent=4)
+
+    return jsonify(status_code=200, data=data, length=length)
 
 
 @app.route('/tables/<table>/<database>/')
@@ -338,7 +369,7 @@ def tables(database, table):
     for index in indexes:
         found_indexes.extend(pattern.findall(index))
 
-    cursor.execute("SELECT * FROM {} LIMIT 0, 50".format(table))
+    cursor.execute("SELECT *, rowid FROM {} LIMIT 0, 50".format(table))
     data = cursor.fetchall()
 
     cursor.execute("PRAGMA TABLE_INFO({})".format(table))
@@ -363,6 +394,26 @@ def tables(database, table):
                            indexes=found_indexes,
                            table_data=table_data,
                            json_data=json_data)
+
+@app.route('/execute/', methods=["POST"])
+@login_required
+def execute_query():
+    database = request.form["database"]
+    query = request.form["query"]
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(query)
+        if query.lower().startswith("select"):
+            return jsonify(status_code=200, data=cursor.fetchall())
+        return jsonify(status_code=200, data="")
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
 
 
 @app.route('/delete/', methods=["POST"])

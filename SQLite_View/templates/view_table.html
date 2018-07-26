@@ -89,11 +89,34 @@
         <div class="card-content">
             <div id="data">
                 <ul class="collapsible">
+                    <li>
+                        <div class="collapsible-header"><i class="material-icons">developer_board</i>Query</div>
+                        <div class="collapsible-body">
+                            <div class="input-field col s12">
+                                <textarea id="query" class="materialize-textarea"></textarea>
+                                <label for="query">Query</label>
+
+                                <button class="btn waves-effect waves-light blue" onclick="execute_query()">Execute query
+                                    <i class="material-icons right">navigate_next</i>
+                                </button>
+                            </div>
+
+                            <p id="return"></p>
+                        </div>
+                    </li>
                     <li class="active">
                         <div class="collapsible-header"><i class="material-icons">description</i>Table Format</div>
                         <div class="collapsible-body overflow">
+                            <div class="row">
+                                <div class="input-field col s8">
+                                    <a class='dropdown-trigger btn-small blue' href='#' data-target='dropdown1'>Toggle columns</a>
+                                </div>
+                               <div class="input-field col s4">
+                                   <input id="search" type="text" class="validate" onkeyup="filter_table()">
+                                   <label for="search">Search table</label>
+                               </div>
 
-                            <a class='dropdown-trigger btn-small blue' href='#' data-target='dropdown1'>Toggle columns</a>
+                           </div>
 
                             <ul id='dropdown1' class='dropdown-content'>
                             {% for column in table_columns %}
@@ -108,20 +131,26 @@
                             {% endfor %}
                             </ul>
 
-                            <table class="responsive-table">
+                            <table class="responsive-table" style="margin-top: -200px">
                                 <thead>
                                     <tr>
                                         {% for column in table_columns %}
                                             <th class="{{ loop.index }}">{{ column }}</th>
                                         {% endfor %}
+                                        <th>Delete</th>
                                     </tr>
                                 </thead>
                                 <tbody id="sql-data">
                                     {% for row in data %}
                                         <tr>
-                                            {% for column in row %}
+                                            {% for column in row[:-1] %}
                                             <td class="{{ loop.index }}">{{ column }}</td>
                                             {% endfor %}
+                                            <td>
+                                                <button class="btn-small waves-effect waves-light red" onclick="delete_row(this, '{{ row[-1] }}')">Delete
+                                                    <i class="material-icons right">delete</i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -139,7 +168,15 @@
                     <li>
                         <div class="collapsible-header"><i class="material-icons">developer_board</i>JSON Format</div>
                         <div class="collapsible-body">
-                            <pre>{{ json_data }}</pre>
+                            <pre id="json_data">{{ json_data }}</pre>
+                            <div class="input-field">
+                                <button id="previous_json-0" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_json(this)" disabled>Previous
+                                    <i class="material-icons right">navigate_before</i>
+                                </button>
+                                <button id="next_json-2" class="btn waves-effect waves-light blue" value="/tables/{{ table }}/{{ database }}/" onclick="replace_json(this)" {% if data|length < 50 %}disabled{% endif %}>Next page
+                                    <i class="material-icons right">navigate_next</i>
+                                </button>
+                            </div>
                         </div>
                     </li>
                 </ul>
@@ -240,91 +277,8 @@
 {% endblock %}
 
 {% block extraJS %}
+    <script src="{{ url_for('static', filename='js/view_table.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let elem = document.querySelectorAll('.collapsible');
-            M.Collapsible.init(elem, {});
-
-            elem = document.querySelector('.tabs');
-            M.Tabs.init(elem, {});
-
-            elem = document.querySelectorAll('.dropdown-trigger');
-            M.Dropdown.init(elem, {constrainWidth: false, coverTrigger: false});
-
-            elem = document.querySelectorAll('.modal');
-            M.Modal.init(elem, {});
-
-            elem = document.querySelectorAll('select');
-            M.FormSelect.init(elem, {});
-
-            elem = document.querySelectorAll('.tooltipped');
-            M.Tooltip.init(elem, {html: "You cant delete the primary key!"});
-        });
-
-        function replace_table(element) {
-
-            let path = element.value;
-            let id = element.id.split("-");
-
-            let type = id[0];
-            let page = id[1];
-
-            axios.get(path + page).then(function (response) {
-                let new_tbody = document.createElement('tbody');
-                new_tbody.id = "sql-data";
-                let data = response.data.data;
-
-                for (let i = 0; i < data.length; i++) {
-                    let row = new_tbody.insertRow();
-                    for (let j = 0; j < data[i].length; j++) {
-                        let cell = row.insertCell(j);
-                        cell.innerText = data[i][j];
-                        cell.className = (j + 1).toString();
-                    }
-                }
-
-                if (type === "previous") {
-                    document.getElementById("next-" + (parseInt(page) + 2)).disabled = (data.length < 50);
-                } else {
-                    document.getElementById("next-" + page).disabled = (data.length < 50);
-                }
-
-
-                if (data.length !== 0) {
-                    let table = document.getElementById("sql-data");
-                    table.parentNode.replaceChild(new_tbody, table);
-
-                    after_get();
-                }
-            });
-
-            function after_get() {
-                page = parseInt(page);
-
-                if (type === "previous") {
-                    element.id = "previous-" + (page - 1);
-                    document.getElementById('next-' + (page + 2)).id = "next-" + (page + 1);
-                } else {
-                    element.id = "next-" + (page + 1);
-                    document.getElementById('previous-' + (page - 2)).id = "previous-" + (page - 1);
-                }
-
-                document.getElementById("previous-" + (page - 1)).disabled = (page === 1);
-            }
-        }
-
-        function toggle_table(element, column, event) {
-            event.preventDefault();
-            element = element.firstElementChild.firstElementChild.firstElementChild;
-            element.checked = !element.checked;
-            let elements = document.getElementsByClassName(column);
-            let display_element = element.checked ? "table-cell" : "none";
-
-            [].forEach.call(elements, function (element) {
-                element.style.display = display_element;
-            });
-        }
-
         function add_column() {
             let name = document.getElementById("column-name").value;
             let type = document.getElementById("column-type").value;
@@ -360,12 +314,6 @@
             })
         }
 
-        function populate_modal(column) {
-            document.getElementById("column-rename-old").value = column;
-            document.getElementById("column-rename").value = column;
-            document.getElementById("column-rename-label").className = "active";
-        }
-
         function rename_column() {
             let old_name = document.getElementById("column-rename-old").value;
             let name = document.getElementById("column-rename").value;
@@ -390,6 +338,22 @@
             }
         }
 
+        function delete_row(element, rowid) {
+            axios.post(
+                '/tables/rows/delete/',
+                `database={{ database }}&table={{ table }}&rowid=${rowid}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Row successfully deleted!", classes: "green"});
+
+                    let table = document.getElementById("sql-data");
+                    table.removeChild(element.closest("tr"));
+                } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+
         function add_index() {
             let name = document.getElementById("index-name").value;
             let column = document.getElementById("index-column").value;
@@ -402,6 +366,23 @@
                     M.toast({html: "Index successfully created!", classes: "green"});
                     M.Modal.getInstance(document.getElementById("modal-index")).close();
                 } else {
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+
+        function execute_query() {
+            let query = document.getElementById("query").value;
+
+            axios.post(
+                '/execute/',
+                `database={{ database }}&query=${query}`
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Query was successful!", classes: "green"});
+                    document.getElementById("return").innerText = response.data.data;
+                } else {
+                    console.log(response.data);
                     M.toast({html: response.data.error, classes: "red"});
                 }
             })
