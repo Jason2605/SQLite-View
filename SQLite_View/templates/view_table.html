@@ -77,6 +77,23 @@
         </div>
     </div>
 
+    <div id="modal-edit" class="modal">
+        <div class="modal-content">
+            <h4>Edit row</h4>
+            {% for column in session["columns"] %}
+            <div class="input-field">
+                <input id="edit-{{ column }}" type="text">
+                <label id="edit-{{ column }}-label" for="edit-{{ column }}">{{ column }}</label>
+            </div>
+            {% endfor %}
+            <input id="edit-rowid" type="text" hidden>
+        </div>
+        <div class="modal-footer">
+            <a class="modal-close waves-effect btn-flat">Close</a>
+            <a class="waves-effect btn-flat" onclick="edit_row()">Edit row</a>
+        </div>
+    </div>
+
 
     <div class="card">
         <div class="card-header"><h5>Table: {{ table }}</h5></div>
@@ -137,6 +154,7 @@
                                         {% for column in table_columns %}
                                             <th class="{{ loop.index }}">{{ column }}</th>
                                         {% endfor %}
+                                        <th>Edit</th>
                                         <th>Delete</th>
                                     </tr>
                                 </thead>
@@ -146,6 +164,11 @@
                                             {% for column in row[:-1] %}
                                             <td class="{{ loop.index }}">{{ column }}</td>
                                             {% endfor %}
+                                            <td>
+                                                <button class="btn-small waves-effect waves-light blue modal-trigger" href="#modal-edit" onclick="populate_modal_edit(this, '{{ row[-1] }}')">Edit
+                                                    <i class="material-icons right">edit</i>
+                                                </button>
+                                            </td>
                                             <td>
                                                 <button class="btn-small waves-effect waves-light red" onclick="delete_row(this, '{{ row[-1] }}')">Delete
                                                     <i class="material-icons right">delete</i>
@@ -382,7 +405,40 @@
                     M.toast({html: "Query was successful!", classes: "green"});
                     document.getElementById("return").innerText = response.data.data;
                 } else {
-                    console.log(response.data);
+                    M.toast({html: response.data.error, classes: "red"});
+                }
+            })
+        }
+
+        function populate_modal_edit(element, rowid) {
+            let columns = {{ session["columns"]|safe }};
+            let row_data = element.closest("tr").getElementsByTagName("td");
+
+            for (let i = 0; i < columns.length; i++) {
+                document.getElementById(`edit-${columns[i]}`).value = row_data[i].innerText;
+                document.getElementById(`edit-${columns[i]}-label`).className = "active";
+            }
+
+            document.getElementById("edit-rowid").value = rowid;
+        }
+
+        function edit_row() {
+            let columns = {{ session["columns"]|safe }};
+            let rowid = document.getElementById("edit-rowid").value;
+            let data = `database={{ database }}&table={{ table }}&rowid=${rowid}`;
+
+            for (let i = 0; i < columns.length; i++) {
+                data += `&${columns[i]}=${document.getElementById(`edit-${columns[i]}`).value}`
+            }
+
+            axios.post(
+                '/tables/rows/edit/',
+                data
+            ).then(function (response) {
+                if (response.data.status_code === 200) {
+                    M.toast({html: "Row successfully updated!", classes: "green"});
+                    M.Modal.getInstance(document.getElementById("modal-edit")).close();
+                } else {
                     M.toast({html: response.data.error, classes: "red"});
                 }
             })

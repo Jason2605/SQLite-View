@@ -274,6 +274,35 @@ def rename_column():
     return jsonify(status_code=200)
 
 
+@app.route('/tables/rows/edit/', methods=["POST"])
+@login_required
+def edit_row():
+    form_data = request.form.to_dict()
+    database = form_data.pop("database")
+    table = form_data.pop("table")
+    row_id = form_data.pop("rowid")
+
+    connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
+    cursor = connection.cursor()
+
+    sql_update_row = "UPDATE {} SET {} WHERE rowid = ?".format(table,
+                                                               "{}{}".format(" = ?, ".join(form_data.keys()),
+                                                                             " = ?"))
+    values = list(form_data.values())
+    values.append(row_id)
+
+    try:
+        cursor.execute(sql_update_row, values)
+        connection.commit()
+    except sqlite3.OperationalError as e:
+        return jsonify(status_code=403, error=str(e))
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify(status_code=200)
+
+
 @app.route('/tables/rows/delete/', methods=["POST"])
 @login_required
 def delete_row():
@@ -284,7 +313,6 @@ def delete_row():
     connection = sqlite3.connect("".join(("databases/", database)), check_same_thread=False)
     cursor = connection.cursor()
     sql_delete_row = "DELETE FROM {} WHERE rowid = {}".format(table, rowid)
-    print(sql_delete_row)
 
     try:
         cursor.execute(sql_delete_row)
