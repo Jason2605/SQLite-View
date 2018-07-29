@@ -1,5 +1,6 @@
 import sqlite3
 from flask_login import UserMixin
+from passlib.hash import bcrypt
 
 
 class User(UserMixin):
@@ -12,7 +13,7 @@ class User(UserMixin):
 
 class Login:
     def __init__(self, create=False):
-        self.connection = sqlite3.connect("sqlite-view.db", check_same_thread=False)
+        self.connection = sqlite3.connect("databases/sqlite-view.db", check_same_thread=False)
         self.users = self.fetch_all_users()
         if create:
             self.__setup()
@@ -95,29 +96,10 @@ class Login:
         ) 
         """
 
-        sql_insert_test_user = """
-        INSERT INTO User VALUES ('test', '$2b$12$3uh/dal.fZBM.R2b/2.tFuRlHXO8Bx9xzet781sQ4Wt9RJpuau3VG')
-        """
+        username = input("Please choose a username: ")
+        password = input("Please choose a password: ")
 
         cursor.execute(sql_setup_user_table)
-        cursor.execute(sql_insert_test_user)
-        self.connection.commit()
-        cursor.close()
-
-    def test(self):
-
-        print("test")
-
-        cursor = self.connection.cursor()
-
-        sql_setup_user_table = """
-        CREATE TABLE IF NOT EXISTS User_test (
-          username TEXT UNIQUE,
-          password TEXT,
-          test INTEGER
-        ) 
-        """
-
-        cursor.execute(sql_setup_user_table)
+        cursor.execute("INSERT INTO User VALUES ('?', '?')", (username, bcrypt.hash(password)))
         self.connection.commit()
         cursor.close()
