@@ -423,6 +423,7 @@ def tables(database, table):
                            table_data=table_data,
                            json_data=json_data)
 
+
 @app.route('/execute/', methods=["POST"])
 @login_required
 def execute_query():
@@ -436,8 +437,9 @@ def execute_query():
         cursor.execute(query)
         if query.lower().startswith("select"):
             return jsonify(status_code=200, data=cursor.fetchall())
+        connection.commit()
         return jsonify(status_code=200, data="")
-    except sqlite3.OperationalError as e:
+    except (sqlite3.OperationalError, sqlite3.IntegrityError) as e:
         return jsonify(status_code=403, error=str(e))
     finally:
         cursor.close()

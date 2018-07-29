@@ -42,4 +42,9 @@ This will bind to 0.0.0.0:5000 by default, you can change this in runserver.py
   
 # Screenshots
 
-soon
+![](https://pyfilter.co.uk/static/images/sqlite-view/home.png)
+![](https://pyfilter.co.uk/static/images/sqlite-view/tables.png)
+![](https://pyfilter.co.uk/static/images/sqlite-view/schema.png)
+![](https://pyfilter.co.uk/static/images/sqlite-view/data.png)
+![](https://pyfilter.co.uk/static/images/sqlite-view/search.png)
+![](https://pyfilter.co.uk/static/images/sqlite-view/json.png)
